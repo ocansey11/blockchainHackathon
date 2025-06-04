@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 320px;
+      height: 480px;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f5f5;
+    }
+    
+    .container {
+      padding: 20px;
+    }
+    
+    .wallet-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .balance-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 10px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .network-name {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    
+    .balance-amount {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .address {
+      font-size: 12px;
+      color: #888;
+      word-break: break-all;
+      margin-top: 8px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .btn-primary {
+      background: #007bff;
+      color: white;
+    }
+    
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    
+    .send-form {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 10px 0;
+      display: none;
+    }
+    
+    .form-group {
+      margin-bottom: 12px;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    .form-select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    .status {
+      text-align: center;
+      margin: 10px 0;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .status-error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .status-info {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    
+    .create-wallet {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    
+    .mnemonic-display {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 10px 0;
+      font-size: 12px;
+      word-break: break-all;
+      border: 1px solid #dee2e6;
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Wallet Creation/Import Screen -->
+    <div id="createWalletScreen" class="create-wallet">
+      <h2>IntelliWallet</h2>
+      <p>Create or import your wallet</p>
+      <button class="btn btn-primary" id="createWalletBtn" style="width: 100%; margin: 10px 0;">Create New Wallet</button>
+      <button class="btn btn-secondary" id="importWalletBtn" style="width: 100%; margin: 10px 0;">Import Wallet</button>
+      
+      <div id="mnemonicDisplay" class="hidden">
+        <p>Save your seed phrase:</p>
+        <div class="mnemonic-display" id="mnemonicText"></div>
+        <button class="btn btn-primary" id="confirmMnemonicBtn" style="width: 100%;">I've Saved It</button>
+      </div>
+      
+      <div id="importForm" class="hidden">
+        <div class="form-group">
+          <label class="form-label">Enter your seed phrase:</label>
+          <textarea class="form-input" id="importMnemonic" rows="3" placeholder="word1 word2 word3..."></textarea>
+        </div>
+        <button class="btn btn-primary" id="confirmImportBtn" style="width: 100%;">Import Wallet</button>
+      </div>
+    </div>
+
+    <!-- Main Wallet Screen -->
+    <div id="walletScreen" class="hidden">
+      <div class="wallet-header">
+        <h3>IntelliWallet</h3>
+        <div class="address" id="walletAddress"></div>
+      </div>
+
+      <!-- Balances -->
+      <div class="balance-card">
+        <div class="network-name">Ethereum Sepolia</div>
+        <div class="balance-amount" id="ethBalance">0.00 ETH</div>
+      </div>
+
+      <div class="balance-card">
+        <div class="network-name">BSC Testnet</div>
+        <div class="balance-amount" id="bnbBalance">0.00 BNB</div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button class="btn btn-primary" id="sendBtn">Send</button>
+        <button class="btn btn-secondary" id="receiveBtn">Receive</button>
+        <button class="btn btn-secondary" id="refreshBtn">Refresh</button>
+      </div>
+
+      <!-- Send Form -->
+      <div class="send-form" id="sendForm">
+        <div class="form-group">
+          <label class="form-label">Network</label>
+          <select class="form-select" id="networkSelect">
+            <option value="sepolia">Ethereum Sepolia</option>
+            <option value="bsc-testnet">BSC Testnet</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">To Address</label>
+          <input type="text" class="form-input" id="toAddress" placeholder="0x...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount</label>
+          <input type="number" class="form-input" id="amount" placeholder="0.0" step="0.000001">
+        </div>
+        <button class="btn btn-primary" id="confirmSendBtn" style="width: 100%;">Send Transaction</button>
+        <button class="btn btn-secondary" id="cancelSendBtn" style="width: 100%; margin-top: 8px;">Cancel</button>
+      </div>
+
+      <!-- Status Messages -->
+      <div id="status" class="hidden"></div>
+    </div>
+  </div>
+
+  <script src="lib/ethers.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

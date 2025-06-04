@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IntelliWallet Debug Console</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .debug-section { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border: 1px solid #dee2e6; }
+        .console { background: #000; color: #0f0; padding: 10px; font-family: monospace; height: 200px; overflow-y: auto; margin: 10px 0; }
+        button { padding: 8px 16px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .error { color: #dc3545; }
+        .success { color: #28a745; }
+        .warning { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <h1>IntelliWallet Debug Console</h1>
+    <p>This page helps debug the IntelliWallet extension installation and functionality.</p>
+    
+    <div class="debug-section">
+        <h3>Extension Detection</h3>
+        <button onclick="checkExtension()">Check Extension Status</button>
+        <div id="extensionStatus"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>Library Loading</h3>
+        <button onclick="checkLibraries()">Check JavaScript Libraries</button>
+        <div id="libraryStatus"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>Storage Test</h3>
+        <button onclick="testStorage()">Test Chrome Storage</button>
+        <div id="storageStatus"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>Network Connectivity</h3>
+        <button onclick="testNetworks()">Test RPC Endpoints</button>
+        <div id="networkStatus"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>Console Output</h3>
+        <div class="console" id="console"></div>
+        <button onclick="clearConsole()">Clear Console</button>
+    </div>
+
+    <script>
+        let consoleDiv = document.getElementById('console');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            consoleDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearConsole() {
+            consoleDiv.innerHTML = '';
+        }
+        
+        async function checkExtension() {
+            const statusDiv = document.getElementById('extensionStatus');
+            let status = '<h4>Extension Status:</h4>';
+            
+            try {
+                // Check if extension APIs are available
+                if (typeof chrome !== 'undefined' && chrome.runtime) {
+                    status += '<p class="success">✅ Chrome extension APIs available</p>';
+                    log('Chrome extension APIs available', 'success');
+                    
+                    // Check if storage API works
+                    if (chrome.storage && chrome.storage.local) {
+                        status += '<p class="success">✅ Chrome storage API available</p>';
+                        log('Chrome storage API available', 'success');
+                    } else {
+                        status += '<p class="error">❌ Chrome storage API not available</p>';
+                        log('Chrome storage API not available', 'error');
+                    }
+                } else {
+                    status += '<p class="error">❌ Chrome extension APIs not available</p>';
+                    log('Chrome extension APIs not available', 'error');
+                }
+                
+                // Check Web3 provider
+                if (typeof window.ethereum !== 'undefined') {
+                    status += '<p class="success">✅ Web3 provider detected</p>';
+                    if (window.ethereum.isIntelliWallet) {
+                        status += '<p class="success">✅ IntelliWallet provider confirmed</p>';
+                        log('IntelliWallet provider confirmed', 'success');
+                    } else {
+                        status += '<p class="warning">⚠️ Different wallet provider detected</p>';
+                        log('Different wallet provider detected', 'warning');
+                    }
+                } else {
+                    status += '<p class="error">❌ No Web3 provider detected</p>';
+                    log('No Web3 provider detected', 'error');
+                }
+                
+            } catch (error) {
+                status += `<p class="error">❌ Error: ${error.message}</p>`;
+                log(`Extension check error: ${error.message}`, 'error');
+            }
+            
+            statusDiv.innerHTML = status;
+        }
+        
+        async function checkLibraries() {
+            const statusDiv = document.getElementById('libraryStatus');
+            let status = '<h4>Library Status:</h4>';
+            
+            // Check ethers.js
+            if (typeof ethers !== 'undefined') {
+                status += '<p class="success">✅ Ethers.js loaded</p>';
+                status += `<p>Version: ${ethers.version || 'Unknown'}</p>`;
+                log('Ethers.js loaded successfully', 'success');
+                
+                // Test basic ethers functionality
+                try {
+                    const randomWallet = ethers.Wallet.createRandom();
+                    status += '<p class="success">✅ Ethers.js wallet creation works</p>';
+                    log('Ethers.js wallet creation test passed', 'success');
+                } catch (error) {
+                    status += `<p class="error">❌ Ethers.js error: ${error.message}</p>`;
+                    log(`Ethers.js test failed: ${error.message}`, 'error');
+                }
+            } else {
+                status += '<p class="error">❌ Ethers.js not loaded</p>';
+                log('Ethers.js not loaded', 'error');
+            }
+            
+            statusDiv.innerHTML = status;
+        }
+        
+        async function testStorage() {
+            const statusDiv = document.getElementById('storageStatus');
+            let status = '<h4>Storage Test:</h4>';
+            
+            try {
+                if (chrome && chrome.storage && chrome.storage.local) {
+                    // Test write
+                    await chrome.storage.local.set({ test: 'debug_test_value' });
+                    status += '<p class="success">✅ Storage write test passed</p>';
+                    log('Storage write test passed', 'success');
+                    
+                    // Test read
+                    const result = await chrome.storage.local.get(['test']);
+                    if (result.test === 'debug_test_value') {
+                        status += '<p class="success">✅ Storage read test passed</p>';
+                        log('Storage read test passed', 'success');
+                    } else {
+                        status += '<p class="error">❌ Storage read test failed</p>';
+                        log('Storage read test failed', 'error');
+                    }
+                    
+                    // Cleanup
+                    await chrome.storage.local.remove(['test']);
+                    status += '<p class="success">✅ Storage cleanup completed</p>';
+                    
+                } else {
+                    status += '<p class="error">❌ Chrome storage not available</p>';
+                    log('Chrome storage not available', 'error');
+                }
+            } catch (error) {
+                status += `<p class="error">❌ Storage error: ${error.message}</p>`;
+                log(`Storage test error: ${error.message}`, 'error');
+            }
+            
+            statusDiv.innerHTML = status;
+        }
+        
+        async function testNetworks() {
+            const statusDiv = document.getElementById('networkStatus');
+            let status = '<h4>Network Connectivity:</h4>';
+            
+            const networks = [
+                {
+                    name: 'Sepolia',
+                    rpc: 'https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161'
+                },
+                {
+                    name: 'BSC Testnet',
+                    rpc: 'https://data-seed-prebsc-1-s1.binance.org:8545'
+                }
+            ];
+            
+            for (const network of networks) {
+                try {
+                    log(`Testing ${network.name} connectivity...`);
+                    const response = await fetch(network.rpc, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            method: 'eth_blockNumber',
+                            params: [],
+                            id: 1
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.result) {
+                            status += `<p class="success">✅ ${network.name} connectivity OK (Block: ${parseInt(data.result, 16)})</p>`;
+                            log(`${network.name} connectivity test passed`, 'success');
+                        } else {
+                            status += `<p class="error">❌ ${network.name} returned invalid response</p>`;
+                            log(`${network.name} returned invalid response`, 'error');
+                        }
+                    } else {
+                        status += `<p class="error">❌ ${network.name} HTTP error: ${response.status}</p>`;
+                        log(`${network.name} HTTP error: ${response.status}`, 'error');
+                    }
+                } catch (error) {
+                    status += `<p class="error">❌ ${network.name} error: ${error.message}</p>`;
+                    log(`${network.name} test error: ${error.message}`, 'error');
+                }
+            }
+            
+            statusDiv.innerHTML = status;
+        }
+        
+        // Auto-run basic checks on load
+        window.addEventListener('load', () => {
+            log('Debug page loaded, running initial checks...');
+            setTimeout(() => {
+                checkExtension();
+                checkLibraries();
+            }, 1000);
+        });
+        
+        // Capture console errors
+        window.addEventListener('error', (event) => {
+            log(`JavaScript Error: ${event.error?.message || event.message}`, 'error');
+        });
+    </script>
+</body>
+</html>
