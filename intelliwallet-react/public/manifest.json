@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "IntelliWallet",
+  "name": "VaultIQ",
   "version": "1.0.0",
   "description": "Your intelligent multi-chain crypto wallet",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "host_permissions": [
     "https://*.alchemy.com/*",
@@ -15,9 +16,20 @@
     "https://*.optimistic.etherscan.io/*",
     "https://*.explorer.solana.com/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
   "action": {
     "default_popup": "index.html",
-    "default_title": "IntelliWallet",
+    "default_title": "VaultIQ",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",

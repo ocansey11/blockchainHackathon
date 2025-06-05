@@ -2,18 +2,22 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
-
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-build: {
+  build: {
     outDir: 'dist',
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'index.html'),
+        background: resolve(__dirname, 'src/background.js'),
+        'content-script': resolve(__dirname, 'src/content-script.js')
       },
       output: {
-        entryFileNames: 'assets/[name].js',
+        entryFileNames: (chunkInfo) => {
+          if (chunkInfo.name === 'background') return 'background.js'
+          if (chunkInfo.name === 'content-script') return 'content-script.js'
+          return 'assets/[name].js'
+        },
         chunkFileNames: 'assets/[name].js',
         assetFileNames: 'assets/[name].[ext]'
       }
