@@ -1,0 +1,29 @@
+{
+  "name": "blockchain-ai-security-service",
+  "version": "1.0.0",
+  "description": "AI-powered blockchain security analysis service",
+  "main": "ai-service.js",
+  "type": "module",
+  "scripts": {
+    "test": "node test.js",
+    "test-domain": "node test-domain-analysis.js",
+    "test-address": "node test-address-analysis.js",
+    "test-portfolio": "node test-portfolio-analysis.js",
+    "test-all": "node test.js"
+  },
+  "keywords": [
+    "blockchain",
+    "security",
+    "ai",
+    "phishing",
+    "crypto"
+  ],
+    "license": "ISC",
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
