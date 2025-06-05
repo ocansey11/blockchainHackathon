@@ -62,23 +62,5 @@
     
     // Dispatch wallet events
     window.dispatchEvent(new Event('ethereum#initialized'));
-    
-    // Announce wallet to the page
-    const announcement = new CustomEvent('eip6963:announceProvider', {
-      detail: {
-        info: {
-          uuid: 'intelliwallet-' + Math.random().toString(36).substr(2, 9),
-          name: 'IntelliWallet',
-          icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzAwN2JmZiIvPgo8L3N2Zz4K',
-          rdns: 'com.intelliwallet'
-        },
-        provider: window.ethereum
-      }
-    });
-    
-    window.dispatchEvent(announcement);
-    console.log('IntelliWallet: Provider announced to page');
-  } else {
-    console.log('IntelliWallet: Existing wallet provider detected, skipping injection');
   }
 })();

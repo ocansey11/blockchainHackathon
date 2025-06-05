@@ -22,14 +22,3 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"]
     }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["lib/*"],
-      "matches": ["<all_urls>"]
-    }
-  ],
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
-  }
-}
