@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import { NETWORKS, STORAGE_KEYS } from '../utils/constants'
 import useAlchemy from '../hooks/useAlchemy'
+import { useRiskCheck } from '../hooks/useRiskCheck';
+import RiskBadge from './RiskBadge';
 
 const SendTransaction = ({ wallet, onBack }) => {
   const [selectedNetwork] = useState(() => {
@@ -17,6 +19,7 @@ const SendTransaction = ({ wallet, onBack }) => {
   const [step, setStep] = useState('form') // 'form', 'confirm', 'sending'
 
   const { balance, getGasPrice, estimateGas } = useAlchemy(wallet?.address, selectedNetwork)
+  const { risk, isBlocked, loading: riskLoading } = useRiskCheck(recipient)
   const currentNetwork = NETWORKS[selectedNetwork]
 
   // Auto-estimate gas when transaction details change
@@ -72,11 +75,15 @@ const SendTransaction = ({ wallet, onBack }) => {
       return { amount: '0', fee: '0', total: '0' }
     }
   }
-
   const validateTransaction = () => {
     if (!recipient) return 'Please enter a recipient address'
     if (!ethers.utils.isAddress(recipient)) return 'Invalid recipient address'
     if (!amount || parseFloat(amount) <= 0) return 'Please enter a valid amount'
+    
+    // Block high-risk transactions
+    if (isBlocked) {
+      return `⚠️ HIGH RISK ADDRESS DETECTED - Transaction blocked for your security. ${risk?.warning || 'This address has been flagged as potentially dangerous.'}`
+    }
     
     const costs = calculateTotalCost()
     if (parseFloat(costs.total) > parseFloat(balance)) {
@@ -216,9 +223,7 @@ const SendTransaction = ({ wallet, onBack }) => {
             }}>
               {error}
             </div>
-          )}
-
-          <div style={{ marginBottom: '24px' }}>
+          )}          <div style={{ marginBottom: '24px' }}>
             <label style={{
               display: 'block',
               marginBottom: '8px',
@@ -243,6 +248,36 @@ const SendTransaction = ({ wallet, onBack }) => {
                 boxSizing: 'border-box'
               }}
             />
+            
+            {/* Risk Assessment Display */}
+            {recipient && ethers.utils.isAddress(recipient) && (
+              <div style={{ marginTop: '12px' }}>
+                {riskLoading ? (
+                  <div style={{
+                    backgroundColor: '#333',
+                    border: '1px solid #444',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    color: '#888',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <div style={{
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid #444',
+                      borderTop: '2px solid #0066cc',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }}></div>
+                    Checking address safety...
+                  </div>
+                ) : risk ? (
+                  <RiskBadge {...risk} />
+                ) : null}
+              </div>
+            )}
           </div>
 
           <div style={{ marginBottom: '24px' }}>
@@ -366,26 +401,26 @@ const SendTransaction = ({ wallet, onBack }) => {
               </div>
             </div>
           )}
-        </main>
-
-        {/* Continue Button */}
+        </main>        {/* Continue Button */}
         <footer style={{ padding: '20px' }}>
           <button
             onClick={handleContinue}
-            disabled={!recipient || !amount || estimating}
+            disabled={!recipient || !amount || estimating || isBlocked}
             style={{
               width: '100%',
               padding: '16px',
-              backgroundColor: (!recipient || !amount || estimating) ? '#333' : '#0066cc',
-              color: (!recipient || !amount || estimating) ? '#666' : 'white',
+              backgroundColor: (!recipient || !amount || estimating || isBlocked) ? '#333' : '#0066cc',
+              color: (!recipient || !amount || estimating || isBlocked) ? '#666' : 'white',
               border: 'none',
               borderRadius: '12px',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: (!recipient || !amount || estimating) ? 'not-allowed' : 'pointer'
+              cursor: (!recipient || !amount || estimating || isBlocked) ? 'not-allowed' : 'pointer'
             }}
           >
-            {estimating ? 'Estimating Gas...' : 'Continue'}
+            {estimating ? 'Estimating Gas...' : 
+             isBlocked ? '🚫 Transaction Blocked' : 
+             'Continue'}
           </button>
         </footer>
       </div>
@@ -434,8 +469,7 @@ const SendTransaction = ({ wallet, onBack }) => {
           display: 'flex',
           flexDirection: 'column',
           gap: '20px'
-        }}>
-          {/* Transaction Details */}
+        }}>          {/* Transaction Details */}
           <div style={{
             backgroundColor: '#2a2a2a',
             border: '1px solid #333',
@@ -448,6 +482,14 @@ const SendTransaction = ({ wallet, onBack }) => {
               <div style={{ color: '#888', fontSize: '14px', marginBottom: '4px' }}>To</div>
               <div style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>{recipient}</div>
             </div>
+            
+            {/* Risk Assessment Display */}
+            {risk && (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ color: '#888', fontSize: '14px', marginBottom: '8px' }}>Security Assessment</div>
+                <RiskBadge {...risk} />
+              </div>
+            )}
             
             <div style={{ marginBottom: '16px' }}>
               <div style={{ color: '#888', fontSize: '14px', marginBottom: '4px' }}>Amount</div>
@@ -523,23 +565,24 @@ const SendTransaction = ({ wallet, onBack }) => {
             }}
           >
             Back
-          </button>
-          <button
+          </button>          <button
             onClick={sendTransaction}
-            disabled={loading}
+            disabled={loading || isBlocked}
             style={{
               flex: 2,
               padding: '16px',
-              backgroundColor: loading ? '#333' : '#0066cc',
-              color: loading ? '#666' : 'white',
+              backgroundColor: (loading || isBlocked) ? '#333' : '#0066cc',
+              color: (loading || isBlocked) ? '#666' : 'white',
               border: 'none',
               borderRadius: '12px',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer'
+              cursor: (loading || isBlocked) ? 'not-allowed' : 'pointer'
             }}
           >
-            {loading ? 'Sending...' : 'Send Transaction'}
+            {loading ? 'Sending...' : 
+             isBlocked ? '🚫 Blocked' : 
+             'Send Transaction'}
           </button>
         </footer>
       </div>
