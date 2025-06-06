@@ -1,12 +1,25 @@
 import { Alchemy, Network } from "alchemy-sdk";
 
+const apiKey = import.meta.env.VITE_ALCHEMY_API_KEY;
+
+// Check if API key is available and not empty
+if (!apiKey || apiKey === 'demo') {
+  console.warn('⚠️ VITE_ALCHEMY_API_KEY is missing or using demo key. Alchemy services will return empty data.');
+}
+
 const alchemy = new Alchemy({
-  apiKey: import.meta.env.VITE_ALCHEMY_API_KEY,
+  apiKey: apiKey || 'demo',
   network: Network.ETH_MAINNET
 });
 
 export async function getTokenSymbols(address) {
   try {
+    // Return empty array if no proper API key
+    if (!apiKey || apiKey === 'demo') {
+      console.warn('Skipping token symbols fetch - no valid API key');
+      return [];
+    }
+    
     const balances = await alchemy.core.getTokenBalances(address);
     const symbols = await Promise.all(
       balances.tokenBalances
@@ -26,6 +39,12 @@ export async function getTokenSymbols(address) {
 
 export async function getContractAddressesInteracted(address) {
   try {
+    // Return empty array if no proper API key
+    if (!apiKey || apiKey === 'demo') {
+      console.warn('Skipping contract addresses fetch - no valid API key');
+      return [];
+    }
+    
     const transfers = await alchemy.core.getAssetTransfers({
       fromBlock: "0x0",
       toAddress: address,

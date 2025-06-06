@@ -17,10 +17,18 @@ const SendTransaction = ({ wallet, onBack }) => {
   const [estimating, setEstimating] = useState(false)
   const [error, setError] = useState('')
   const [step, setStep] = useState('form') // 'form', 'confirm', 'sending'
-
   const { balance, getGasPrice, estimateGas } = useAlchemy(wallet?.address, selectedNetwork)
   const { risk, isBlocked, loading: riskLoading } = useRiskCheck(recipient)
   const currentNetwork = NETWORKS[selectedNetwork]
+
+  // Debug logging
+  console.log('SendTransaction Debug:', {
+    recipient,
+    isValidAddress: recipient ? ethers.utils.isAddress(recipient) : false,
+    risk,
+    riskLoading,
+    isBlocked
+  })
 
   // Auto-estimate gas when transaction details change
   useEffect(() => {
@@ -272,8 +280,7 @@ const SendTransaction = ({ wallet, onBack }) => {
                       animation: 'spin 1s linear infinite'
                     }}></div>
                     Checking address safety...
-                  </div>
-                ) : risk ? (
+                  </div>                ) : risk ? (
                   <RiskBadge {...risk} />
                 ) : null}
               </div>
@@ -482,12 +489,13 @@ const SendTransaction = ({ wallet, onBack }) => {
               <div style={{ color: '#888', fontSize: '14px', marginBottom: '4px' }}>To</div>
               <div style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>{recipient}</div>
             </div>
-            
-            {/* Risk Assessment Display */}
+              {/* Risk Assessment Display */}
             {risk && (
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ color: '#888', fontSize: '14px', marginBottom: '8px' }}>Security Assessment</div>
-                <RiskBadge {...risk} />
+                <ErrorBoundary fallbackMessage="Unable to display risk assessment">
+                  <RiskBadge {...risk} />
+                </ErrorBoundary>
               </div>
             )}
             
